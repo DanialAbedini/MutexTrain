@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 public class SharedResource
 {
     private int counter=0;
+    private  Mutex mutex = new Mutex();
 
    
 
@@ -13,7 +14,8 @@ public class SharedResource
     {
         try
         {
-            Interlocked.Add(ref counter, a);
+            mutex.WaitOne();
+            counter += a;
         }
         catch (Exception ex)
         {
@@ -21,6 +23,7 @@ public class SharedResource
         }
         finally
         {
+            mutex.ReleaseMutex();
         }
     }
 
@@ -34,16 +37,22 @@ class Program
 {
     static async Task Main()
     {
-        var tasks = new List<Task>();
+        var tasks1 = new List<Task>();
+        var tasks2 = new List<Task>();
+
         for (int m = 0; m < 10; m++)
         {
             SharedResource sharedResource1 = new SharedResource();
-            for (int i = 0; i < 100; i++)
-            {
-                tasks.Add(Task.Run(() => sharedResource1.Increment(1)));
-            }
-            await Task.WhenAll(tasks);
-            Console.WriteLine($"Expected Answer: {100} Thread Anwer: {sharedResource1.show()}");
+            Parallel.For(0, 100, i => {
+                tasks1.Add(Task.Run(() => sharedResource1.Increment(1)));
+            });
+            Parallel.For(0, 100, i => {
+                tasks2.Add(Task.Run(() => sharedResource1.Increment(1)));
+            });
+            await Task.WhenAll(tasks1);
+            await Task.WhenAll(tasks2);
+
+            Console.WriteLine($"Expected Answer: {200} Thread Anwer: {sharedResource1.show()}");
         }
         Console.ReadLine();
     }

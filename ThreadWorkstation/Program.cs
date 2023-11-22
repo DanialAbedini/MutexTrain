@@ -4,7 +4,7 @@ using System.Threading.Channels;
 
 public class SharedResource
 {
-    private static Mutex mutex;
+    private  Mutex mutex;
     private int counter;
 
     
@@ -45,13 +45,21 @@ class Program
         for (int m = 0; m < 10; m++)
         {
             SharedResource sharedResource1 = new SharedResource();
-            for (int i = 0; i < 100; i++)
-            {
+            Parallel.For(0, 100, i => {
                 tasks.Add(Task.Run(() => sharedResource1.Increment(1)));                               
-            }
+            });
             Task.WaitAll(tasks.ToArray());
             Console.WriteLine($"Expected Answer: {100} Thread Anwer: {sharedResource1.show()}");
+
+            //    SharedResource sharedResource1 = new SharedResource();
+            //    for (int i = 0; i < 100; i++)
+            //    {
+            //        tasks.Add(Task.Run(() => sharedResource1.Increment(1)));                               
+            //    }
+            //    Task.WaitAll(tasks.ToArray());
+            //    Console.WriteLine($"Expected Answer: {100} Thread Anwer: {sharedResource1.show()}");
         }
+
         Console.ReadLine();
     }
 }

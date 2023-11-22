@@ -5,17 +5,15 @@ using System.Threading.Tasks;
 
 public class SharedResource
 {
-    private static Semaphore semaphore = new Semaphore(1,1);
     private int counter=0;
 
    
 
     public void Increment(int a)
     {
-        semaphore.WaitOne();
         try
         {
-            counter += a;
+            Interlocked.Add(ref counter, a);
         }
         catch (Exception ex)
         {
@@ -23,7 +21,6 @@ public class SharedResource
         }
         finally
         {
-            semaphore.Release();
         }
     }
 

@@ -1,22 +1,18 @@
 ﻿using System;
 using System.Threading;
-using System.Threading.Channels;
+using System.Threading;
+using System.Threading.Tasks;
 
 public class SharedResource
 {
-    private static Mutex mutex;
-    private int counter;
+    private static Semaphore semaphore = new Semaphore(1,1);
+    private int counter=0;
 
-    
-    public SharedResource()
-    {
-        mutex = new Mutex();
-        counter = 0;
-    }
+   
 
     public void Increment(int a)
     {
-        mutex.WaitOne();
+        semaphore.WaitOne();
         try
         {
             counter += a;
@@ -27,7 +23,7 @@ public class SharedResource
         }
         finally
         {
-            mutex.ReleaseMutex();
+            semaphore.Release();
         }
     }
 
@@ -39,7 +35,7 @@ public class SharedResource
 
 class Program
 {
-    static void Main()
+    static async Task Main()
     {
         var tasks = new List<Task>();
         for (int m = 0; m < 10; m++)
@@ -47,9 +43,9 @@ class Program
             SharedResource sharedResource1 = new SharedResource();
             for (int i = 0; i < 100; i++)
             {
-                tasks.Add(Task.Run(() => sharedResource1.Increment(1)));                               
+                tasks.Add(Task.Run(() => sharedResource1.Increment(1)));
             }
-            Task.WaitAll(tasks.ToArray());
+            await Task.WhenAll(tasks);
             Console.WriteLine($"Expected Answer: {100} Thread Anwer: {sharedResource1.show()}");
         }
         Console.ReadLine();
